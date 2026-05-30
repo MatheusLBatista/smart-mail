@@ -1,10 +1,13 @@
 #include <Arduino.h>
+
+// ── FIRMWARE PAUSADO — descomentar quando conectar o ESP32 ───────────────────
+/*
+
 #include <WiFi.h>
 #include <LittleFS.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-// ─── Configurações ────────────────────────────────────────────────────────────
 const char* WIFI_SSID     = "SEU_WIFI_AQUI";
 const char* WIFI_PASSWORD = "SUA_SENHA_AQUI";
 
@@ -12,7 +15,6 @@ const int PINO_SENSOR = 19;
 const int PINO_LED    = 18;
 
 const unsigned long DEBOUNCE_MS = 15000;
-// ─────────────────────────────────────────────────────────────────────────────
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -20,7 +22,6 @@ AsyncWebSocket ws("/ws");
 bool          ultimoEstado  = HIGH;
 unsigned long ultimoGatilho = 0;
 
-// ─── WebSocket ────────────────────────────────────────────────────────────────
 void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client, AwsEventType type,
                void*, uint8_t*, size_t) {
   if (type == WS_EVT_CONNECT)
@@ -29,7 +30,6 @@ void onWsEvent(AsyncWebSocket*, AsyncWebSocketClient* client, AwsEventType type,
     Serial.printf("[WS] Cliente desconectado: #%u\n", client->id());
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 String getTime() {
   struct tm ti;
   if (!getLocalTime(&ti)) return "--:--:--";
@@ -54,7 +54,6 @@ void dispararEvento() {
   Serial.printf("[SENSOR] Correio detectado! %s %s\n", t.c_str(), d.c_str());
 }
 
-// ─── Setup ────────────────────────────────────────────────────────────────────
 void setup() {
   Serial.begin(115200);
   pinMode(PINO_SENSOR, INPUT);
@@ -71,7 +70,6 @@ void setup() {
   }
   Serial.printf("\nConectado! IP: %s\n", WiFi.localIP().toString().c_str());
 
-  // NTP — fuso horário de Brasília (UTC-3)
   configTime(-3 * 3600, 0, "pool.ntp.org", "time.google.com");
 
   ws.onEvent(onWsEvent);
@@ -82,12 +80,10 @@ void setup() {
   Serial.println("Acesse: http://" + WiFi.localIP().toString());
 }
 
-// ─── Loop ─────────────────────────────────────────────────────────────────────
 void loop() {
   bool          estadoAtual = digitalRead(PINO_SENSOR);
   unsigned long agora       = millis();
 
-  // Borda de descida (HIGH → LOW) = correio inserido
   if (ultimoEstado == HIGH && estadoAtual == LOW) {
     if (agora - ultimoGatilho > DEBOUNCE_MS) {
       ultimoGatilho = agora;
@@ -103,3 +99,10 @@ void loop() {
   ws.cleanupClients();
   delay(50);
 }
+
+*/
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Stubs vazios para o projeto compilar sem o firmware real
+void setup() {}
+void loop()  {}
