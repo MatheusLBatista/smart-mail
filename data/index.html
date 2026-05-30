@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensor de Correio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f0a500;
+    --green: #3fb950;
+    --red: #f85149;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 40px;
+    gap: 20px;
+  }
+
+  /* ── Header ── */
+  .header { text-align: center; }
+  .header-icon { font-size: 52px; line-height: 1; display: block; margin-bottom: 8px; }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
+  .header p  { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* ── Pill de status ── */
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .dot.on {
+    background: var(--green);
+    box-shadow: 0 0 0 3px #3fb95030;
+    animation: blink 2.5s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  /* ── Card principal ── */
+  .card {
+    width: 100%; max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px;
+    text-align: center;
+    transition: border-color 0.4s, box-shadow 0.4s;
+  }
+  .card.alert {
+    border-color: var(--accent);
+    box-shadow: 0 0 48px #f0a50018;
+  }
+  .card-icon {
+    font-size: 68px;
+    display: block;
+    margin-bottom: 16px;
+  }
+  .card.alert .card-icon { animation: pop 0.5s ease 3; }
+  @keyframes pop {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.18); }
+  }
+  .card-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .card-sub   { font-size: 14px; color: var(--muted); }
+  .card-time {
+    display: inline-block;
+    margin-top: 14px;
+    background: #f0a50015;
+    border: 1px solid #f0a50040;
+    color: var(--accent);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card.alert .card-time { opacity: 1; }
+
+  /* ── Histórico ── */
+  .section { width: 100%; max-width: 380px; }
+  .section-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-label button {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 11px; padding: 0;
+    transition: color 0.2s;
+  }
+  .section-label button:hover { color: var(--text); }
+
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .empty {
+    text-align: center;
+    color: #484f58;
+    font-size: 14px;
+    padding: 28px;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    animation: slideDown 0.3s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .item-icon  { font-size: 26px; flex-shrink: 0; }
+  .item-info  { flex: 1; }
+  .item-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .item-time  { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    top: 16px; left: 50%;
+    transform: translateX(-50%) translateY(-90px);
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 22px;
+    border-radius: 100px;
+    white-space: nowrap;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 999;
+    box-shadow: 0 4px 24px #0008;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <span class="header-icon">📬</span>
+  <h1>Sensor de Correio</h1>
+  <p>Monitoramento em tempo real</p>
+</header>
+
+<div class="pill">
+  <span class="dot" id="dot"></span>
+  <span id="connLabel">Conectando...</span>
+</div>
+
+<div class="card" id="card">
+  <span class="card-icon" id="cardIcon">📭</span>
+  <p class="card-title" id="cardTitle">Aguardando correspondência</p>
+  <p class="card-sub"   id="cardSub">Sensor ativo, nenhuma atividade</p>
+  <span class="card-time" id="cardTime"></span>
+</div>
+
+<section class="section">
+  <div class="section-label">
+    Histórico do dia
+    <button onclick="clearHistory()">Limpar</button>
+  </div>
+  <div class="list" id="list">
+    <div class="empty" id="empty">Nenhum correio recebido ainda hoje</div>
+  </div>
+</section>
+
+<div class="toast" id="toast">📬 Correio chegou!</div>
+
+<script>
+  const dot       = document.getElementById('dot');
+  const connLabel = document.getElementById('connLabel');
+  const card      = document.getElementById('card');
+  const cardIcon  = document.getElementById('cardIcon');
+  const cardTitle = document.getElementById('cardTitle');
+  const cardSub   = document.getElementById('cardSub');
+  const cardTime  = document.getElementById('cardTime');
+  const list      = document.getElementById('list');
+  const toast     = document.getElementById('toast');
+
+  let ws, reconnTimer, resetTimer;
+
+  function connect() {
+    ws = new WebSocket('ws://' + location.hostname + '/ws');
+
+    ws.onopen = () => {
+      dot.classList.add('on');
+      connLabel.textContent = 'Conectado ao sensor';
+      clearTimeout(reconnTimer);
+    };
+
+    ws.onclose = () => {
+      dot.classList.remove('on');
+      connLabel.textContent = 'Sem conexão — reconectando…';
+      reconnTimer = setTimeout(connect, 3000);
+    };
+
+    ws.onerror = () => ws.close();
+
+    ws.onmessage = (e) => {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'mail') onMail(msg.time, msg.date);
+    };
+  }
+
+  function onMail(time, date) {
+    clearTimeout(resetTimer);
+    card.classList.add('alert');
+    cardIcon.textContent  = '📬';
+    cardTitle.textContent = 'Correio chegou!';
+    cardSub.textContent   = 'Correspondência detectada';
+    cardTime.textContent  = time;
+
+    resetTimer = setTimeout(() => {
+      card.classList.remove('alert');
+      cardIcon.textContent  = '📭';
+      cardTitle.textContent = 'Aguardando correspondência';
+      cardSub.textContent   = 'Sensor ativo, nenhuma atividade';
+    }, 12000);
+
+    const empty = document.getElementById('empty');
+    if (empty) empty.remove();
+
+    const item = document.createElement('div');
+    item.className = 'item';
+    item.innerHTML =
+      '<span class="item-icon">📬</span>' +
+      '<div class="item-info">' +
+        '<p class="item-title">Correspondência recebida</p>' +
+        '<p class="item-time">' + time + (date ? ' &nbsp;·&nbsp; ' + date : '') + '</p>' +
+      '</div>';
+    list.insertBefore(item, list.firstChild);
+
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+
+    if (navigator.vibrate) navigator.vibrate([200, 80, 200]);
+  }
+
+  function clearHistory() {
+    list.innerHTML = '<div class="empty" id="empty">Nenhum correio recebido ainda hoje</div>';
+  }
+
+  connect();
+</script>
+</body>
+</html>
